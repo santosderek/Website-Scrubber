@@ -3,7 +3,8 @@ import re
 import bs4
 import os
 from argparse import ArgumentParser
-from direct_downloader.direct_downloader import Download_Manager
+from direct_downloader.direct_downloader import Download_Manager, logging
+
 
 FINAL_RECURRSION_LEVEL = 0
 
@@ -78,18 +79,33 @@ def return_file_and_folder_links(html, url):
     all_links = soup.find_all('a', href=True)
 
     # Get all relative links
-    relative_directories = [link.get('href')
-                            for link in all_links if link['href'].endswith('/')]
+    # relative_directories = [link.get('href') for link in all_links if link['href'].endswith(
+    #    '/') and not link['href'].startswith('/')]
+
+    relative_directories = []
+    for link in all_links:
+        if link['href'].endswith('/') and link.get('href')[:1] != '/':
+            relative_directories.append(link.get('href'))
 
     relative_file_links = [
         link.get('href') for link in all_links if not link['href'].endswith('/')]
 
     # Get all absoulte links
+
     absoulute_file_links = [
         url + link if not re.match('^(https://|http://)', link) else url for link in relative_file_links]
 
-    absolute_directories = [
-        url + link if not re.match('^(https://|http://)', link) else url for link in relative_directories]
+    # absolute_directories = [
+    #    url + link if not re.match('^(https://|http://)', link) else url for link in relative_directories]
+
+    absolute_directories = []
+    for link in relative_directories:
+        #print('LINK:', link)
+        #print('URL:', url)
+        if not re.match('^(https://|http://)', link) and link != url:
+            absolute_directories.append(url + link)
+        else:
+            absolute_directories.append(url)
 
     absoulute_file_links = purge_negative_links(absoulute_file_links, url)
     absolute_directories = purge_negative_links(absolute_directories, url)
@@ -108,7 +124,7 @@ def download(url: str, path: str, current_level=0, threads=3):
         html = return_main_site_text(url)
 
         if html is None:
-            print('Could not connect to:', url)
+            logging.debug('Could not connect to: ' + url)
             return
 
         # If path to local device folder is not found, make it.
@@ -117,7 +133,7 @@ def download(url: str, path: str, current_level=0, threads=3):
 
         # Change directory into the directory where the downloads should be
         os.chdir(path)
-        print('Moved to:', path)
+        logging.debug('Moved to: ' + path)
 
         absoulute_directories, absoulute_file_links = return_file_and_folder_links(
             html, url)
@@ -131,12 +147,14 @@ def download(url: str, path: str, current_level=0, threads=3):
         #print('Final Level:', FINAL_RECURRSION_LEVEL)
         if current_level != FINAL_RECURRSION_LEVEL:
             for next_url in absoulute_directories:
-                print('----------next url:', next_url)
+                #print('----------next url:', next_url)
                 start = next_url.rfind('/', 0, len(next_url) - 1)
                 download(next_url,
                          '.' + next_url[start:],
                          current_level + 1,
                          threads)
+                logging.info('URL: %s, CL: %d, FL: %d, T: %d' % (
+                    next_url, current_level + 1, FINAL_RECURRSION_LEVEL, threads))
         os.chdir('..')
 
     except Exception as e:
