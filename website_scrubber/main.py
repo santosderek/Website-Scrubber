@@ -3,13 +3,13 @@ import re
 import bs4
 import os
 from argparse import ArgumentParser
-from direct_downloader.direct_downloader import Download_Manager, logging
+from directdownloader.direct_downloader import Download_Manager, logging
 
 
 FINAL_RECURRSION_LEVEL = 0
 
-# TODO: Logger - Possibily 3 different files "Skipped.txt", "Failed.txt"
 # TODO: Download Percentage needs to be displayed
+# TODO: ADD -r as bool argument "action=store_true" to download all recursive directories, should be an if statement that if true, make level 9**99 or something
 
 
 def parse_arguments():
@@ -25,6 +25,9 @@ def parse_arguments():
 
     parser.add_argument('--folder', '-f', metavar='folder',
                         type=str, nargs='?', help='Path of folder to download to.')
+
+    parser.add_argument('--recursion', '-r', action='store_true',
+                        help='Set recursion to all sub-directories')
 
     return parser.parse_args()
 
@@ -171,6 +174,9 @@ def main():
     # If recursion level is defined within arguments, change global variable
     if arguments.level != None:
         FINAL_RECURRSION_LEVEL = arguments.level
+
+    if arguments.recursion:
+        FINAL_RECURRSION_LEVEL = 9**99
 
     # Check folder
     if arguments.folder is None:

@@ -11,4 +11,9 @@ setup(name='Website Scrubber',
           'console_scripts':
               ['ws = website_scrubber.main:main']  # bdl = best download
       },
+      install_requires=[
+          'Direct-Downloader==0.6',
+          'requests',
+          'bs4'
+      ],
       )
