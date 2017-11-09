@@ -36,11 +36,35 @@ def parse_arguments():
 
 def get_url_html(url):
     """ Requests url and return it's contents """
-    site = requests.get(url)
-    if site.status_code == 200:
-        return site.text
+
+    if re.search(r'^(\w+://)', url) is None:
+
+        try:
+            # If URL has no http:// in the beginning, add it.
+            new_url = 'http://' + url
+            site = requests.get(new_url)
+
+            if site.status_code == 200:
+                return site.text, new_url
+
+            # If http:// failed, try https://
+            new_url = 'https://' + url
+            site = requests.get(new_url)
+
+            if site.status_code == 200:
+                return site.text, new_url
+
+        except Exception as e:
+            return None
+
     else:
-        return None
+        # If url has *:// at the beginning of the url, fetch html normally
+        site = requests.get(url)
+
+        if site.status_code == 200:
+            return site.text, url
+        else:
+            return None, url
 
 
 def purge_negative_links(list_of_urls: list, url: str):
@@ -119,7 +143,7 @@ def download(url: str, path: str, current_level=0, threads=3):
     current_level: current level of recursion program is at
     """
     try:
-        html = get_url_html(url)
+        html, url = get_url_html(url)
         # If no HTML was given, assume could not connect.
         if html is None:
             logging.debug('Could not connect to: ' + url)
@@ -154,7 +178,7 @@ def download(url: str, path: str, current_level=0, threads=3):
         os.chdir('..')
 
     except Exception as e:
-        logging.debug("Error downloading: " + e)
+        logging.debug("Error downloading: " + str(e))
 
 
 def main():
