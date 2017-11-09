@@ -5,14 +5,16 @@ import os
 from argparse import ArgumentParser
 from directdownloader.direct_downloader import Download_Manager, logging
 
+# Globals
 
 FINAL_RECURRSION_LEVEL = 0
 
 # TODO: Download Percentage needs to be displayed
-# TODO: ADD -r as bool argument "action=store_true" to download all recursive directories, should be an if statement that if true, make level 9**99 or something
 
 
 def parse_arguments():
+    """ Parse arguments at startup """
+
     parser = ArgumentParser(description='Scrub a directory.')
     parser.add_argument('url', metavar='url', type=str,
                         nargs='*', help='Automatically detect urls')
@@ -32,7 +34,8 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def return_main_site_text(url):
+def get_url_html(url):
+    """ Requests url and return it's contents """
     site = requests.get(url)
     if site.status_code == 200:
         return site.text
@@ -41,7 +44,7 @@ def return_main_site_text(url):
 
 
 def purge_negative_links(list_of_urls: list, url: str):
-    # Take out parent link and url
+    """ Removes links that result in unnecessary recursion """
     while url in list_of_urls:
         list_of_urls.remove(url)
 
@@ -82,9 +85,6 @@ def return_file_and_folder_links(html, url):
     all_links = soup.find_all('a', href=True)
 
     # Get all relative links
-    # relative_directories = [link.get('href') for link in all_links if link['href'].endswith(
-    #    '/') and not link['href'].startswith('/')]
-
     relative_directories = []
     for link in all_links:
         if link['href'].endswith('/') and link.get('href')[:1] != '/':
@@ -94,17 +94,12 @@ def return_file_and_folder_links(html, url):
         link.get('href') for link in all_links if not link['href'].endswith('/')]
 
     # Get all absoulte links
-
     absoulute_file_links = [
         url + link if not re.match('^(https://|http://)', link) else url for link in relative_file_links]
 
-    # absolute_directories = [
-    #    url + link if not re.match('^(https://|http://)', link) else url for link in relative_directories]
-
     absolute_directories = []
     for link in relative_directories:
-        #print('LINK:', link)
-        #print('URL:', url)
+
         if not re.match('^(https://|http://)', link) and link != url:
             absolute_directories.append(url + link)
         else:
@@ -124,8 +119,8 @@ def download(url: str, path: str, current_level=0, threads=3):
     current_level: current level of recursion program is at
     """
     try:
-        html = return_main_site_text(url)
-
+        html = get_url_html(url)
+        # If no HTML was given, assume could not connect.
         if html is None:
             logging.debug('Could not connect to: ' + url)
             return
@@ -141,27 +136,25 @@ def download(url: str, path: str, current_level=0, threads=3):
         absoulute_directories, absoulute_file_links = return_file_and_folder_links(
             html, url)
 
-        # Send to download Manager
+        # Send links to download Manager
         manager = Download_Manager(absoulute_file_links, threads, '.')
         manager.start()
 
         # Go to recursion level
-        #print('Level:', current_level)
-        #print('Final Level:', FINAL_RECURRSION_LEVEL)
         if current_level != FINAL_RECURRSION_LEVEL:
             for next_url in absoulute_directories:
-                #print('----------next url:', next_url)
                 start = next_url.rfind('/', 0, len(next_url) - 1)
                 download(next_url,
-                         '.' + next_url[start:],
+                         '.' +
+                         next_url[start:],
                          current_level + 1,
                          threads)
-                logging.info('URL: %s, CL: %d, FL: %d, T: %d' % (
-                    next_url, current_level + 1, FINAL_RECURRSION_LEVEL, threads))
+
+        # Change to parent directory
         os.chdir('..')
 
     except Exception as e:
-        print(e)
+        logging.debug("Error downloading: " + e)
 
 
 def main():
@@ -170,6 +163,10 @@ def main():
 
     # Parse Arguments
     arguments = parse_arguments()
+
+    # If no url, exit
+    if len(arguments.url) == 0:
+        exit(1)
 
     # If recursion level is defined within arguments, change global variable
     if arguments.level != None:
@@ -186,19 +183,18 @@ def main():
     else:
         folder = arguments.folder
 
+    # If folder does not exists, make it
     if not os.path.exists(folder):
         os.mkdir(folder)
 
+    # Change working directory to folder specified
+    os.chdir(folder)
+
+    # Number of download threads to use
     if arguments.threads is None:
         threads = 3
     else:
         threads = arguments.threads
-
-    os.chdir(folder)
-
-    # If no url, exit
-    if len(arguments.url) == 0:
-        exit(1)
 
     # Download all urls in arguments
     for url in arguments.url:
