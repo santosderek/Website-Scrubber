@@ -80,7 +80,6 @@ def purge_negative_links(list_of_urls: list, url: str):
                 list_of_urls.remove(url + iChar)
     return list_of_urls
 
-
 def return_file_and_folder_links(html, url):
     """ Parse HTML and return a list of urls to directories and file links """
     soup = bs4.BeautifulSoup(html, 'html.parser')
