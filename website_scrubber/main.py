@@ -68,7 +68,7 @@ def get_url_html(url):
 
 
 def purge_negative_links(list_of_urls: list, url: str):
-    """ Removes links that result in unnecessary recursion """
+    """ Removes links in a clean recursion ;) """
 
     illegal = ['','/','.','..','./','../','?C=D;O=A','?C=N;O=D','?C=S;O=A','?C=M;O=A']
     for iChar in illegal:
