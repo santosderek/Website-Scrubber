@@ -68,40 +68,17 @@ def get_url_html(url):
 
 
 def purge_negative_links(list_of_urls: list, url: str):
-    """ Removes links that result in unnecessary recursion """
-    while url in list_of_urls:
-        list_of_urls.remove(url)
+    """ Removes links in a clean recursion ;) """
 
-    while url + '/' in list_of_urls:
-        list_of_urls.remove(url + '/')
-
-    while url + '.' in list_of_urls:
-        list_of_urls.remove(url + '.')
-
-    while url + '..' in list_of_urls:
-        list_of_urls.remove(url + '..')
-
-    while url + './' in list_of_urls:
-        list_of_urls.remove(url + './')
-
-    while url + '../' in list_of_urls:
-        list_of_urls.remove(url + '../')
-
-    # Appache Parent Redirects
-    while url + '?C=D;O=A' in list_of_urls:
-        list_of_urls.remove(url + '?C=D;O=A')
-
-    while url + '?C=N;O=D' in list_of_urls:
-        list_of_urls.remove(url + '?C=N;O=D')
-
-    while url + '?C=S;O=A' in list_of_urls:
-        list_of_urls.remove(url + '?C=S;O=A')
-
-    while url + '?C=M;O=A' in list_of_urls:
-        list_of_urls.remove(url + '?C=M;O=A')
-
+    illegal = ['','/','.','..','./','../','?C=D;O=A','?C=N;O=D','?C=S;O=A','?C=M;O=A']
+    for iChar in illegal:
+        if iChar is '':
+            while url in list_of_urls:
+                list_of_urls.remove(url)
+        else:
+            while url + iChar in list_of_urls:
+                list_of_urls.remove(url + iChar)
     return list_of_urls
-
 
 def return_file_and_folder_links(html, url):
     """ Parse HTML and return a list of urls to directories and file links """
