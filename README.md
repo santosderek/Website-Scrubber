@@ -7,6 +7,16 @@ A script which incorporates multi-threading to scrub through a web-directory for
 
 *** Repository developed in Python 3.6.x ***
 
+*First install Direct-Downloader*
+
+    pip3 install Direct-Downloader
+
+OR
+
+    Follow Instructions From Here: https://github.com/santosderek/Direct-Downloader
+
+*Then install Website Scrubber:*
+
 *Copy repository from github:*
 
     git clone https://github.com/santosderek/Website-Scrubber

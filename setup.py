@@ -12,7 +12,6 @@ setup(name='Website Scrubber',
               ['ws = website_scrubber.main:main']
       },
       install_requires=[
-          'Direct-Downloader==0.6',
           'requests',
           'bs4'
       ],
