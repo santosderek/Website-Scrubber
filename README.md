@@ -1,4 +1,4 @@
-# Website-Scrubber
+# Website-Scrubber - an amazing tool
 A script which incorporates multi-threading to scrub through a web-directory for downloads.
 
 ***
